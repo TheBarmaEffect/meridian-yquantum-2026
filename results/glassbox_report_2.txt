@@ -1,0 +1,32 @@
+============================================================
+  GLASS BOX REPORT — Instance 2
+============================================================
+
+Total distance : 27.30
+Approx. ratio  : 0.9153
+Routes         : 2
+
+  [0, 1, 0]
+  [0, 2, 3, 0]
+
+--- Vehicle Explanations ---
+Vehicle 0: route [0, 1, 0] (distance 5.66)
+  Next best: [0, 1, 2, 3, 0] (distance 21.74)
+  Selected with 100% confidence after 5 penalty iteration(s)
+  Penalty evolution: 94.3 → 141.5 → 212.3 → 318.4 → 477.6 → 716.4
+
+Vehicle 1: route [0, 2, 3, 0] (distance 21.64)
+  Next best: [0, 1, 2, 3, 0] (distance 21.74)
+  Selected with 100% confidence after 5 penalty iteration(s)
+  Penalty evolution: 94.3 → 141.5 → 212.3 → 318.4 → 477.6 → 716.4
+
+--- Resource Usage ---
+  qubits=16  gates=272  depth=48  time=1.59s  penalty_iters=5
+  qubits=16  gates=272  depth=48  time=1.59s  penalty_iters=5
+
+--- Event Log (last 20) ---
+  [2026-04-04T23:02:14.104456+00:00] mode: {'mode': 'full', 'n_nodes': 4, 'n_qubits': 16}
+  [2026-04-04T23:02:22.995806+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 1.6051528453826904, 'status': 'warn'}
+  [2026-04-04T23:02:23.000395+00:00] mode: {'mode': 'full', 'n_nodes': 4, 'n_qubits': 16}
+  [2026-04-04T23:02:31.421171+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 1.5899291038513184, 'status': 'warn'}
+============================================================
