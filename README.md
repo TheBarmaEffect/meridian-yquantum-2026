@@ -14,7 +14,7 @@
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue?style=flat-square&logo=python)
 ![Qiskit](https://img.shields.io/badge/Qiskit-2.0%2B-6929C4?style=flat-square&logo=ibm)
 ![qBraid](https://img.shields.io/badge/qBraid-integrated-00C896?style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
+
 
 yQuantum 2026 · QuantumCT × RTRC × qBraid Track
 
