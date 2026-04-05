@@ -16,7 +16,7 @@
 ![qBraid](https://img.shields.io/badge/qBraid-integrated-00C896?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
-· yQuantum 2026 · QuantumCT × RTRC × qBraid Track
+yQuantum 2026 · QuantumCT × RTRC × qBraid Track
 
 [Quick Start](#-quick-start) · [Architecture](#-architecture) · [Results](#-results) · [How It Works](#-how-it-works) · [Glass Box](#-glass-box-verification)
 
