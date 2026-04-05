@@ -40,10 +40,20 @@ echo ""
 # Upgrade pip silently
 pip install --upgrade pip --quiet
 
-# Install exact pinned requirements
+# Install core requirements
 echo "Installing dependencies (this takes ~1 minute)..."
 pip install -r requirements.txt --quiet
-echo "Dependencies installed ✅"
+echo "Core dependencies installed ✅"
+
+# Try optional deps (qbraid, ollama) — not critical
+if [ "$MINOR" -ge 10 ]; then
+  echo "Installing optional packages (qBraid, Ollama)..."
+  pip install -r requirements-optional.txt --quiet 2>/dev/null && \
+    echo "Optional dependencies installed ✅" || \
+    echo "Optional dependencies skipped (non-critical) ⚠️"
+else
+  echo "Python < 3.10 — skipping qBraid/Ollama (not needed, runs on local Aer) ⚠️"
+fi
 echo ""
 
 # Set up .env if missing

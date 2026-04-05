@@ -13,7 +13,7 @@ Routes         : 4
 
 --- Vehicle Explanations ---
 Vehicle 0: route [0, 5, 3, 4, 0] (distance 14.66)
-  Next best: [0, 1, 2, 3, 0] (distance 17.76)
+  Next best: [0, 2, 1, 3, 0] (distance 14.66)
   Selected with 100% confidence after 5 penalty iteration(s)
   Penalty evolution: 67.1 → 100.6 → 150.9 → 226.4 → 339.6 → 509.4
 
@@ -33,30 +33,30 @@ Vehicle 3: route [0, 7, 8, 1, 0] (distance 10.67)
   Penalty evolution: 50.0 → 75.0 → 112.5 → 168.8 → 253.1 → 379.7
 
 --- Resource Usage ---
-  qubits=16  gates=272  depth=48  time=2.97s  penalty_iters=5
-  qubits=16  gates=272  depth=48  time=2.91s  penalty_iters=5
-  qubits=16  gates=272  depth=48  time=3.40s  penalty_iters=5
-  qubits=16  gates=272  depth=48  time=3.42s  penalty_iters=5
+  qubits=16  gates=272  depth=48  time=5.05s  penalty_iters=5
+  qubits=16  gates=272  depth=48  time=2.76s  penalty_iters=5
+  qubits=16  gates=272  depth=48  time=3.33s  penalty_iters=5
+  qubits=16  gates=272  depth=48  time=3.34s  penalty_iters=5
 
 --- Event Log (last 20) ---
-  [2026-04-05T00:15:03.973483+00:00] mode: {'mode': 'full', 'n_nodes': 4, 'n_qubits': 16}
-  [2026-04-05T00:15:12.918502+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 1.6168370246887207, 'status': 'warn'}
-  [2026-04-05T00:15:12.979772+00:00] mode: {'mode': 'full', 'n_nodes': 4, 'n_qubits': 16}
-  [2026-04-05T00:15:24.129336+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 1.622408151626587, 'status': 'warn'}
-  [2026-04-05T00:15:24.130180+00:00] mode: {'mode': 'hqcd', 'clusters': [[6, 4], [3, 5], [2, 1]]}
-  [2026-04-05T00:15:24.743921+00:00] complexity_check: {'n_qubits': 9, 'n_gates': 117, 'elapsed': 0.07155299186706543, 'status': 'ok'}
-  [2026-04-05T00:15:24.743936+00:00] cache_store: {'hash': 'e7d542194ac3a1eb'}
-  [2026-04-05T00:15:25.405811+00:00] complexity_check: {'n_qubits': 9, 'n_gates': 117, 'elapsed': 0.18352603912353516, 'status': 'ok'}
-  [2026-04-05T00:15:25.405826+00:00] cache_store: {'hash': '0c1934ec183f1ed8'}
-  [2026-04-05T00:15:26.378148+00:00] complexity_check: {'n_qubits': 9, 'n_gates': 117, 'elapsed': 0.08719706535339355, 'status': 'ok'}
-  [2026-04-05T00:15:26.378163+00:00] cache_store: {'hash': '09cbf6eb38ac1d43'}
-  [2026-04-05T00:15:26.379629+00:00] mode: {'mode': 'hqcd', 'clusters': [[3, 5, 4], [9, 10, 6], [12, 11, 2], [7, 1, 8]]}
-  [2026-04-05T00:15:38.865792+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 2.970824956893921, 'status': 'warn'}
-  [2026-04-05T00:15:38.865807+00:00] cache_store: {'hash': 'c56a2cbba27c0e91'}
-  [2026-04-05T00:15:50.559219+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 2.905359983444214, 'status': 'warn'}
-  [2026-04-05T00:15:50.559236+00:00] cache_store: {'hash': 'b0308a1ad6c21e94'}
-  [2026-04-05T00:16:04.325525+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 3.4018421173095703, 'status': 'warn'}
-  [2026-04-05T00:16:04.325565+00:00] cache_store: {'hash': '556f1a484761a4bf'}
-  [2026-04-05T00:16:16.956695+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 3.4167628288269043, 'status': 'warn'}
-  [2026-04-05T00:16:16.956712+00:00] cache_store: {'hash': 'd8c3a8a73bd2926c'}
+  [2026-04-05T00:50:01.537455+00:00] mode: {'mode': 'full', 'n_nodes': 4, 'n_qubits': 16}
+  [2026-04-05T00:50:11.682999+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 1.607654094696045, 'status': 'warn'}
+  [2026-04-05T00:50:11.739531+00:00] mode: {'mode': 'full', 'n_nodes': 4, 'n_qubits': 16}
+  [2026-04-05T00:50:21.818946+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 1.5933103561401367, 'status': 'warn'}
+  [2026-04-05T00:50:21.819746+00:00] mode: {'mode': 'hqcd', 'clusters': [[6, 4], [3, 5], [2, 1]]}
+  [2026-04-05T00:50:22.425030+00:00] complexity_check: {'n_qubits': 9, 'n_gates': 117, 'elapsed': 0.06792497634887695, 'status': 'ok'}
+  [2026-04-05T00:50:22.425046+00:00] cache_store: {'hash': 'e7d542194ac3a1eb'}
+  [2026-04-05T00:50:23.086808+00:00] complexity_check: {'n_qubits': 9, 'n_gates': 117, 'elapsed': 0.1809239387512207, 'status': 'ok'}
+  [2026-04-05T00:50:23.086824+00:00] cache_store: {'hash': '0c1934ec183f1ed8'}
+  [2026-04-05T00:50:23.783065+00:00] complexity_check: {'n_qubits': 9, 'n_gates': 117, 'elapsed': 0.08870983123779297, 'status': 'ok'}
+  [2026-04-05T00:50:23.783080+00:00] cache_store: {'hash': '09cbf6eb38ac1d43'}
+  [2026-04-05T00:50:23.784539+00:00] mode: {'mode': 'hqcd', 'clusters': [[3, 5, 4], [9, 10, 6], [12, 11, 2], [7, 1, 8]]}
+  [2026-04-05T00:50:37.047911+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 5.04695200920105, 'status': 'warn'}
+  [2026-04-05T00:50:37.047926+00:00] cache_store: {'hash': 'c56a2cbba27c0e91'}
+  [2026-04-05T00:50:48.537005+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 2.756939172744751, 'status': 'warn'}
+  [2026-04-05T00:50:48.537021+00:00] cache_store: {'hash': 'b0308a1ad6c21e94'}
+  [2026-04-05T00:50:59.566047+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 3.333155870437622, 'status': 'warn'}
+  [2026-04-05T00:50:59.566066+00:00] cache_store: {'hash': '556f1a484761a4bf'}
+  [2026-04-05T00:51:11.613300+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 3.3445539474487305, 'status': 'warn'}
+  [2026-04-05T00:51:11.613316+00:00] cache_store: {'hash': 'd8c3a8a73bd2926c'}
 ============================================================
