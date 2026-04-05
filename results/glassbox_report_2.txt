@@ -21,12 +21,12 @@ Vehicle 1: route [0, 2, 3, 0] (distance 21.64)
   Penalty evolution: 94.3 → 141.5 → 212.3 → 318.4 → 477.6 → 716.4
 
 --- Resource Usage ---
-  qubits=16  gates=272  depth=48  time=1.59s  penalty_iters=5
-  qubits=16  gates=272  depth=48  time=1.59s  penalty_iters=5
+  qubits=16  gates=272  depth=48  time=1.64s  penalty_iters=5
+  qubits=16  gates=272  depth=48  time=1.64s  penalty_iters=5
 
 --- Event Log (last 20) ---
-  [2026-04-05T00:50:01.537455+00:00] mode: {'mode': 'full', 'n_nodes': 4, 'n_qubits': 16}
-  [2026-04-05T00:50:11.682999+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 1.607654094696045, 'status': 'warn'}
-  [2026-04-05T00:50:11.739531+00:00] mode: {'mode': 'full', 'n_nodes': 4, 'n_qubits': 16}
-  [2026-04-05T00:50:21.818946+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 1.5933103561401367, 'status': 'warn'}
+  [2026-04-05T00:53:36.353463+00:00] mode: {'mode': 'full', 'n_nodes': 4, 'n_qubits': 16}
+  [2026-04-05T00:53:45.316069+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 1.646454095840454, 'status': 'warn'}
+  [2026-04-05T00:53:45.371831+00:00] mode: {'mode': 'full', 'n_nodes': 4, 'n_qubits': 16}
+  [2026-04-05T00:53:54.292563+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 1.6354997158050537, 'status': 'warn'}
 ============================================================

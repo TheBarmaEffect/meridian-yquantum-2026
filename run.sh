@@ -1,14 +1,12 @@
 #!/bin/bash
 set -e
 
-# Auto-activate venv if not already active
-if [ -z "$VIRTUAL_ENV" ]; then
-  if [ -d ".venv" ]; then
-    source .venv/bin/activate
-  else
-    echo "ERROR: Run ./setup.sh first"
-    exit 1
-  fi
+# Always activate the project's own venv
+if [ -d ".venv" ]; then
+  source .venv/bin/activate
+else
+  echo "ERROR: Run ./setup.sh first"
+  exit 1
 fi
 
 # Default: run all instances
