@@ -9,7 +9,7 @@
                           ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝╚═╝╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝
                           ```
 
-### Quantum-Verified Route Optimization
+### Quantum-Verified Route Optimization OS
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue?style=flat-square&logo=python)
 ![Qiskit](https://img.shields.io/badge/Qiskit-2.0%2B-6929C4?style=flat-square&logo=ibm)
