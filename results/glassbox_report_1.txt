@@ -25,6 +25,6 @@ Vehicle 1: route [0, 2, 3, 0] (distance 21.64)
   qubits=16  gates=272  depth=48  time=1.61s  penalty_iters=5
 
 --- Event Log (last 20) ---
-  [2026-04-04T23:02:14.104456+00:00] mode: {'mode': 'full', 'n_nodes': 4, 'n_qubits': 16}
-  [2026-04-04T23:02:22.995806+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 1.6051528453826904, 'status': 'warn'}
+  [2026-04-04T23:58:26.571846+00:00] mode: {'mode': 'full', 'n_nodes': 4, 'n_qubits': 16}
+  [2026-04-04T23:58:37.039186+00:00] complexity_check: {'n_qubits': 16, 'n_gates': 272, 'elapsed': 1.6080410480499268, 'status': 'warn'}
 ============================================================

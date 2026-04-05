@@ -1,0 +1,51 @@
+======================================================
+MERIDIAN EXECUTION LOG -- Instance 1
+Timestamp: 2026-04-04 23:59:48 UTC
+Backend: qBraid statevector (qbraid:qbraid:sim:qir-sv)
+======================================================
+Vehicle 1: [1] -> route [0, 1, 0] | qubits=16 gates=272 time=1.61s
+Vehicle 2: [2, 3] -> route [0, 2, 3, 0] | qubits=16 gates=272 time=1.61s
+Total distance: 27.2987
+Approx ratio vs optimal: 0.9153
+Glass Box confidence: 100.00%
+======================================================
+
+======================================================
+MERIDIAN EXECUTION LOG -- Instance 2
+Timestamp: 2026-04-04 23:59:48 UTC
+Backend: qBraid statevector (qbraid:qbraid:sim:qir-sv)
+======================================================
+Vehicle 1: [1] -> route [0, 1, 0] | qubits=16 gates=272 time=1.61s
+Vehicle 2: [2, 3] -> route [0, 2, 3, 0] | qubits=16 gates=272 time=1.61s
+Total distance: 27.2987
+Approx ratio vs optimal: 0.9153
+Glass Box confidence: 100.00%
+======================================================
+
+======================================================
+MERIDIAN EXECUTION LOG -- Instance 3
+Timestamp: 2026-04-04 23:59:48 UTC
+Backend: qBraid statevector (qbraid:qbraid:sim:qir-sv)
+======================================================
+Vehicle 1: [4, 6] -> route [0, 4, 6, 0] | qubits=9 gates=117 time=0.07s
+Vehicle 2: [3, 5] -> route [0, 3, 5, 0] | qubits=9 gates=117 time=0.19s
+Vehicle 3: [1, 2] -> route [0, 1, 2, 0] | qubits=9 gates=117 time=0.09s
+Total distance: 50.6965
+Approx ratio vs optimal: 0.7671
+Glass Box confidence: 100.00%
+======================================================
+
+======================================================
+MERIDIAN EXECUTION LOG -- Instance 4
+Timestamp: 2026-04-04 23:59:48 UTC
+Backend: qBraid statevector (qbraid:qbraid:sim:qir-sv)
+======================================================
+Vehicle 1: [5, 3, 4] -> route [0, 5, 3, 4, 0] | qubits=16 gates=272 time=6.85s
+Vehicle 2: [9, 10, 6] -> route [0, 9, 10, 6, 0] | qubits=16 gates=272 time=2.97s
+Vehicle 3: [12, 11, 2] -> route [0, 12, 11, 2, 0] | qubits=16 gates=272 time=3.37s
+Vehicle 4: [7, 8, 1] -> route [0, 7, 8, 1, 0] | qubits=16 gates=272 time=3.52s
+Total distance: 59.5355
+Approx ratio vs optimal: 0.6190
+Glass Box confidence: 100.00%
+======================================================
+

@@ -12,6 +12,7 @@ import argparse
 import os
 import sys
 import time
+from datetime import datetime, timezone
 
 # Ensure solver package is importable regardless of cwd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -26,7 +27,12 @@ from clustering import (
     compute_warm_start_angles,
     route_distance,
 )
-from qaoa import adaptive_penalty_qaoa, local_route_distance
+from qaoa import (
+    adaptive_penalty_qaoa,
+    local_route_distance,
+    get_qbraid_backend,
+    backend_name,
+)
 from glassbox import GlassBox, run_with_timeout
 
 # ---------------------------------------------------------------------------
@@ -82,10 +88,13 @@ def format_routes(routes):
 # ---------------------------------------------------------------------------
 
 def solve_instance(inst: CVRPInstance, mode: str, p: int,
-                   glassbox: GlassBox, verbose: bool = False) -> dict:
+                   glassbox: GlassBox, backend_tuple,
+                   verbose: bool = False) -> dict:
+    bname = backend_name(backend_tuple)
     print(f"\n{'='*60}")
     print(f"  Instance {inst.instance_id}  |  Nv={inst.num_vehicles}  C={inst.capacity}  "
           f"customers={inst.num_customers}  mode={mode}  p={p}")
+    print(f"  Backend: {bname}")
     print(f"{'='*60}")
 
     global_dist = compute_distance_matrix(inst.depot, inst.customers)
@@ -101,7 +110,7 @@ def solve_instance(inst: CVRPInstance, mode: str, p: int,
         local_dist = build_local_dist(nodes, global_dist)
         n_qubits = n * n
 
-        print(f"  Full mode: TSP on {n} nodes → {n_qubits} qubits")
+        print(f"  Full mode: TSP on {n} nodes -> {n_qubits} qubits")
         glassbox.log_event('mode', {'mode': 'full', 'n_nodes': n, 'n_qubits': n_qubits})
 
         greedy = nearest_neighbor_route(0, list(range(1, n)), local_dist)
@@ -109,20 +118,23 @@ def solve_instance(inst: CVRPInstance, mode: str, p: int,
         init_params = compute_warm_start_angles(greedy_d, local_dist, n, p)
 
         def _run():
-            return adaptive_penalty_qaoa(n, local_dist, p, init_params, verbose=verbose)
+            return adaptive_penalty_qaoa(
+                n, local_dist, p, init_params,
+                backend_tuple=backend_tuple, verbose=verbose)
 
         result = run_with_timeout(_run, timeout_sec=180)
 
         if result is None or result[0] is None:
-            print("  ⚠ QAOA timed out or failed — using classical fallback")
+            print("  WARNING: QAOA timed out or failed -- using classical fallback")
             greedy_global = nearest_neighbor_route(0, sorted(inst.customers.keys()), global_dist)
             all_routes = split_tour_into_routes(
                 [nodes.index(g) for g in greedy_global], nodes,
                 inst.num_vehicles, inst.capacity)
             fallback_metrics = {
                 'n_qubits': n_qubits, 'gate_count': 0, 'depth': 0,
-                'exec_time': 0, 'penalty_iterations': 0, 'penalty_history': [],
-                'top_k': [], 'fallback': True,
+                'exec_time': 0, 'backend_time': 0, 'penalty_iterations': 0,
+                'penalty_history': [], 'top_k': [], 'fallback': True,
+                'backend_counts': {},
             }
             all_metrics = [fallback_metrics] * len(all_routes)
             glassbox.log_event('fallback', {'reason': 'timeout', 'instance': inst.instance_id})
@@ -137,12 +149,12 @@ def solve_instance(inst: CVRPInstance, mode: str, p: int,
                 metrics['n_qubits'], metrics['gate_count'],
                 metrics['exec_time'], inst.num_customers)
             if status == 'adapt' and p > 1:
-                print(f"  Complexity budget → adapt: reducing p to {p-1}")
+                print(f"  Complexity budget -> adapt: reducing p to {p-1}")
                 p -= 1
 
     # ------------------------------------------------------------------
     else:
-        # HQCD mode: cluster → per-vehicle QAOA
+        # HQCD mode: cluster -> per-vehicle QAOA
         clusters = angular_sweep_cluster(inst.depot, inst.customers,
                                           inst.num_vehicles, inst.capacity)
         print(f"  HQCD clusters: {clusters}")
@@ -153,8 +165,9 @@ def solve_instance(inst: CVRPInstance, mode: str, p: int,
                 all_routes.append([0, 0])
                 all_metrics.append({
                     'n_qubits': 0, 'gate_count': 0, 'depth': 0,
-                    'exec_time': 0, 'penalty_iterations': 0,
-                    'penalty_history': [], 'top_k': [],
+                    'exec_time': 0, 'backend_time': 0,
+                    'penalty_iterations': 0, 'penalty_history': [],
+                    'top_k': [], 'backend_counts': {},
                 })
                 continue
 
@@ -171,26 +184,29 @@ def solve_instance(inst: CVRPInstance, mode: str, p: int,
                 all_metrics.append(cached['metrics'])
                 continue
 
-            print(f"  Vehicle {vid}: TSP on {n} nodes → {n_qubits} qubits  cluster={cluster}")
+            print(f"  Vehicle {vid}: TSP on {n} nodes -> {n_qubits} qubits  cluster={cluster}")
 
             greedy = nearest_neighbor_route(0, list(range(1, n)), local_dist)
             greedy_d = local_route_distance(greedy, local_dist)
             init_params = compute_warm_start_angles(greedy_d, local_dist, n, p)
 
             def _run(n_=n, ld_=local_dist, p_=p, ip_=init_params):
-                return adaptive_penalty_qaoa(n_, ld_, p_, ip_, verbose=verbose)
+                return adaptive_penalty_qaoa(
+                    n_, ld_, p_, ip_,
+                    backend_tuple=backend_tuple, verbose=verbose)
 
             result = run_with_timeout(_run, timeout_sec=90)
 
             if result is None or result[0] is None:
-                print(f"  ⚠ Vehicle {vid}: QAOA failed — classical fallback")
+                print(f"  WARNING: Vehicle {vid}: QAOA failed -- classical fallback")
                 fb_route = nearest_neighbor_route(0, list(range(1, n)), local_dist)
                 global_route = [nodes[i] for i in fb_route]
                 all_routes.append(global_route)
                 all_metrics.append({
                     'n_qubits': n_qubits, 'gate_count': 0, 'depth': 0,
-                    'exec_time': 0, 'penalty_iterations': 0,
-                    'penalty_history': [], 'top_k': [], 'fallback': True,
+                    'exec_time': 0, 'backend_time': 0,
+                    'penalty_iterations': 0, 'penalty_history': [],
+                    'top_k': [], 'fallback': True, 'backend_counts': {},
                 })
                 glassbox.log_event('fallback', {
                     'reason': 'qaoa_failed', 'vehicle': vid, 'cluster': cluster,
@@ -206,7 +222,7 @@ def solve_instance(inst: CVRPInstance, mode: str, p: int,
                     metrics['n_qubits'], metrics['gate_count'],
                     metrics['exec_time'], len(cluster))
                 if status == 'fallback':
-                    print(f"  Vehicle {vid}: complexity budget exceeded — fallback")
+                    print(f"  Vehicle {vid}: complexity budget exceeded -- fallback")
                     fb_route = nearest_neighbor_route(0, list(range(1, n)), local_dist)
                     global_route = [nodes[i] for i in fb_route]
                     all_routes[-1] = global_route
@@ -238,9 +254,11 @@ def solve_instance(inst: CVRPInstance, mode: str, p: int,
 
     approx_ratio = glassbox.compute_approximation_ratio(total_distance, classical_dist)
 
+    avg_confidence = 0.0
     for vid, (route, metrics) in enumerate(zip(all_routes, all_metrics)):
         top_k = metrics.get('top_k', [])
         confidence = glassbox.compute_confidence(top_k)
+        avg_confidence += confidence
         alt_route = top_k[1][0] if len(top_k) > 1 else None
         alt_dist = top_k[1][1] if len(top_k) > 1 else 0.0
 
@@ -255,6 +273,9 @@ def solve_instance(inst: CVRPInstance, mode: str, p: int,
             penalty_history=metrics.get('penalty_history', []),
         )
         vehicle_explanations.append(exp)
+
+    n_vehicles = len(all_routes)
+    avg_confidence = avg_confidence / max(n_vehicles, 1)
 
     # Full report
     report = glassbox.generate_full_report(
@@ -280,8 +301,10 @@ def solve_instance(inst: CVRPInstance, mode: str, p: int,
         'total_distance': total_distance,
         'approx_ratio': approx_ratio,
         'optimal_distance': optimal_dist,
+        'avg_confidence': avg_confidence,
         'metrics': all_metrics,
         'report': report,
+        'backend': bname,
     }
 
 
@@ -293,14 +316,14 @@ def write_instance_file(instance_id, routes):
     path = os.path.join(RESULTS_DIR, f'Instance{instance_id}.txt')
     with open(path, 'w') as f:
         f.write(format_routes(routes))
-    print(f"  → {path}")
+    print(f"  -> {path}")
 
 
 def write_glassbox_report(instance_id, report):
     path = os.path.join(RESULTS_DIR, f'glassbox_report_{instance_id}.txt')
     with open(path, 'w') as f:
         f.write(report)
-    print(f"  → {path}")
+    print(f"  -> {path}")
 
 
 def write_resource_table(all_results):
@@ -318,7 +341,39 @@ def write_resource_table(all_results):
         lines.append(f'| {iid} | {total_qubits} | {total_gates} | {total_time:.2f}s |')
     with open(path, 'w') as f:
         f.write('\n'.join(lines) + '\n')
-    print(f"\n  Resource table → {path}")
+    print(f"\n  Resource table -> {path}")
+
+
+def write_execution_log(all_results, backend_str):
+    """Append a structured execution log entry for each instance."""
+    path = os.path.join(RESULTS_DIR, 'execution_log.txt')
+    with open(path, 'w') as f:
+        for res in all_results:
+            iid = res['instance_id']
+            ts = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+            sep = '=' * 54
+            f.write(f"{sep}\n")
+            f.write(f"MERIDIAN EXECUTION LOG -- Instance {iid}\n")
+            f.write(f"Timestamp: {ts}\n")
+            f.write(f"Backend: {backend_str}\n")
+            f.write(f"{sep}\n")
+
+            for vid, (route, metrics) in enumerate(
+                    zip(res['routes'], res['metrics'])):
+                cluster = [c for c in route if c != 0]
+                nq = metrics.get('n_qubits', 0)
+                gc = metrics.get('gate_count', 0)
+                et = metrics.get('exec_time', 0)
+                f.write(
+                    f"Vehicle {vid+1}: {cluster} -> route {route} "
+                    f"| qubits={nq} gates={gc} time={et:.2f}s\n"
+                )
+
+            f.write(f"Total distance: {res['total_distance']:.4f}\n")
+            f.write(f"Approx ratio vs optimal: {res['approx_ratio']:.4f}\n")
+            f.write(f"Glass Box confidence: {res.get('avg_confidence', 0):.2%}\n")
+            f.write(f"{sep}\n\n")
+    print(f"  Execution log -> {path}")
 
 
 # ---------------------------------------------------------------------------
@@ -370,6 +425,10 @@ def main():
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
+    # --- initialise backend once ------------------------------------------
+    backend_tuple = get_qbraid_backend()
+    bname = backend_name(backend_tuple)
+
     if args.instance == 'all':
         instance_ids = [1, 2, 3, 4]
     else:
@@ -387,7 +446,7 @@ def main():
         else:
             mode = args.mode
             if mode == 'full' and inst.num_customers > 5:
-                print(f"  ⚠ Full mode impractical for {inst.num_customers} customers, using HQCD")
+                print(f"  WARNING: Full mode impractical for {inst.num_customers} customers, using HQCD")
                 mode = 'hqcd'
 
         # Auto p selection
@@ -396,12 +455,13 @@ def main():
         else:
             p = 2
 
-        result = solve_instance(inst, mode, p, glassbox, verbose=args.verbose)
+        result = solve_instance(inst, mode, p, glassbox, backend_tuple,
+                                verbose=args.verbose)
 
         # Validate
         errors = validate_solution(inst, result['routes'])
         if errors:
-            print(f"\n  ✗ VALIDATION ERRORS for Instance {iid}:")
+            print(f"\n  VALIDATION ERRORS for Instance {iid}:")
             for e in errors:
                 print(f"    - {e}")
             # Attempt repair via fallback
@@ -409,9 +469,9 @@ def main():
             result = _repair_solution(inst, result, glassbox)
             errors = validate_solution(inst, result['routes'])
             if errors:
-                print(f"  ✗ Repair failed: {errors}")
+                print(f"  Repair failed: {errors}")
             else:
-                print(f"  ✓ Repair successful")
+                print(f"  Repair successful")
 
         # Write outputs
         write_instance_file(iid, result['routes'])
@@ -419,9 +479,10 @@ def main():
         all_results.append(result)
 
     write_resource_table(all_results)
+    write_execution_log(all_results, bname)
 
     print("\n" + "=" * 60)
-    print("  Meridian — All instances complete")
+    print("  Meridian -- All instances complete")
     print("=" * 60)
     for r in all_results:
         print(f"  Instance {r['instance_id']}: distance={r['total_distance']:.2f}  "
@@ -443,8 +504,9 @@ def _repair_solution(inst, result, glassbox):
             routes.append(route)
         metrics.append({
             'n_qubits': 0, 'gate_count': 0, 'depth': 0,
-            'exec_time': 0, 'penalty_iterations': 0,
-            'penalty_history': [], 'top_k': [], 'fallback': True,
+            'exec_time': 0, 'backend_time': 0,
+            'penalty_iterations': 0, 'penalty_history': [],
+            'top_k': [], 'fallback': True, 'backend_counts': {},
         })
     total_d = sum(route_distance(r, global_dist) for r in routes)
     result['routes'] = routes

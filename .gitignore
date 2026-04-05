@@ -1,5 +1,14 @@
-.venv/
+.env
+.env.*
+!.env.example
 __pycache__/
 *.pyc
+*.pyo
 .DS_Store
+.pytest_cache/
 *.egg-info/
+dist/
+build/
+.ipynb_checkpoints/
+results/*.log
+.venv/
