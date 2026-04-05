@@ -14,9 +14,9 @@ MINOR=$(echo $PY | cut -d. -f2)
 
 echo "Python version: $PY"
 
-if [ "$MAJOR" -lt 3 ] || ([ "$MAJOR" -eq 3 ] && [ "$MINOR" -lt 10 ]); then
+if [ "$MAJOR" -lt 3 ] || ([ "$MAJOR" -eq 3 ] && [ "$MINOR" -lt 9 ]); then
   echo ""
-  echo "ERROR: Python 3.10 or higher is required (you have $PY)"
+  echo "ERROR: Python 3.9 or higher is required (you have $PY)"
   echo "Download from https://www.python.org/downloads/"
   exit 1
 fi
