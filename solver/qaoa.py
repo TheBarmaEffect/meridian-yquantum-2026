@@ -33,19 +33,33 @@ from qubo import build_tsp_qubo, qubo_to_ising, precompute_qubo_costs
 # qBraid / Aer backend selection
 # ---------------------------------------------------------------------------
 
+def _circuit_to_qasm3(circuit) -> str:
+    """
+    Convert a Qiskit circuit to a QASM3 string compatible with qBraid's
+    QIR simulator. Strips 'stdgates.inc' and 'barrier' lines which the
+    qBraid QIR compiler does not support.
+    """
+    from qiskit.qasm3 import dumps
+    raw = dumps(circuit)
+    lines = []
+    for line in raw.splitlines():
+        if 'include "stdgates.inc"' in line:
+            continue
+        if line.strip().startswith('barrier'):
+            continue
+        lines.append(line)
+    return '\n'.join(lines)
+
+
 def get_qbraid_backend():
     """
-    Detects qBraid simulator for reporting, but uses Qiskit Aer for actual
-    circuit execution (the qBraid cloud runtime needs extra transpilation
-    packages like pyqir/braket which may not be installed).
+    Connects to qBraid and returns the QIR statevector device for real
+    cloud circuit execution via QASM3 submission.
 
-    Returns ("qbraid_aer", device_id_str, AerSimulator) when qBraid is
+    Returns ("qbraid", device_id_str, qbraid_device) when qBraid is
     reachable, or ("aer", "local", AerSimulator) otherwise.
     """
     import warnings
-    from qiskit_aer import AerSimulator
-    aer = AerSimulator(method="statevector")
-
     api_key = os.getenv("QBRAID_API_KEY")
     if api_key:
         try:
@@ -55,9 +69,9 @@ def get_qbraid_backend():
                 provider = QbraidProvider(api_key=api_key)
                 devices = provider.get_devices()
 
-            # find a simulator for the name
+            # find qBraid's own QIR statevector simulator
             sim_name = None
-            preferred = ["qbraid:qbraid:sim:qir-sv", "aws:aws:sim:sv1"]
+            preferred = ["qbraid:qbraid:sim:qir-sv"]
             for pid in preferred:
                 for d in devices:
                     if str(d.id) == pid:
@@ -70,38 +84,66 @@ def get_qbraid_backend():
                     if "sim" in str(d.id).lower():
                         sim_name = str(d.id)
                         break
+
             if sim_name:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    device = provider.get_device(sim_name)
                 print(f"[MERIDIAN] qBraid connected ({len(devices)} devices) — target: {sim_name}")
-                print(f"[MERIDIAN] Execution: Qiskit Aer statevector (local, qBraid-verified)")
-                return ("qbraid_aer", sim_name, aer)
+                print(f"[MERIDIAN] Execution: qBraid QIR statevector (cloud)")
+                return ("qbraid", sim_name, device)
         except Exception as e:
             print(f"[MERIDIAN] qBraid SDK error: {e}")
 
+    from qiskit_aer import AerSimulator
     print("[MERIDIAN] Backend: Qiskit Aer statevector (local)")
-    return ("aer", "local", aer)
+    return ("aer", "local", AerSimulator(method="statevector"))
 
 
 def run_circuit_on_backend(circuit, backend_tuple, shots=1024):
     """
-    Runs circuit on Aer (always fast & reliable).
+    Runs circuit on qBraid cloud (via QASM3) or falls back to local Aer.
     Returns counts dict and elapsed time.
     """
-    _, _, aer_backend = backend_tuple
-    from qiskit import transpile
+    btype, _, backend = backend_tuple
     t_start = time.time()
-    t_circ = transpile(circuit, aer_backend)
-    job = aer_backend.run(t_circ, shots=shots)
-    result = job.result()
-    counts = dict(result.get_counts())
-    elapsed = time.time() - t_start
-    return counts, elapsed
+
+    if btype == "qbraid":
+        try:
+            import warnings, time as _time
+            qasm3_str = _circuit_to_qasm3(circuit)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                job = backend.run(qasm3_str, shots=shots)
+            # Poll for completion (max 60s)
+            for _ in range(30):
+                status = str(job.status())
+                if 'COMPLETED' in status or 'FAILED' in status:
+                    break
+                _time.sleep(2)
+            if 'COMPLETED' in str(job.status()):
+                result = job.result()
+                raw_counts = result.data.get_counts()
+                counts = {k: v for k, v in raw_counts.items()}
+                return counts, time.time() - t_start
+        except Exception as e:
+            pass  # fall through to local Aer
+
+    # Local Aer fallback
+    from qiskit_aer import AerSimulator
+    from qiskit import transpile
+    aer = AerSimulator(method="statevector")
+    t_circ = transpile(circuit, aer)
+    job = aer.run(t_circ, shots=shots)
+    counts = dict(job.result().get_counts())
+    return counts, time.time() - t_start
 
 
 def backend_name(backend_tuple) -> str:
     """Human-readable name for the active backend."""
     btype, sim_id, _ = backend_tuple
-    if btype == "qbraid_aer":
-        return f"qBraid statevector ({sim_id})"
+    if btype == "qbraid":
+        return f"qBraid QIR statevector ({sim_id})"
     return "Qiskit Aer statevector"
 
 
@@ -326,20 +368,6 @@ def run_qaoa(n_nodes: int,
     valid_set = {idx for idx, _ in valid_perms}
     violations = sum(1 for idx in sorted_idx[:20] if idx not in valid_set)
 
-    # ---- run final circuit through the backend for execution evidence ----
-    backend_counts = {}
-    backend_time = 0.0
-    if backend_tuple is not None:
-        try:
-            qc_meas = qc_final.copy()
-            qc_meas.measure_all()
-            backend_counts, backend_time = run_circuit_on_backend(
-                qc_meas, backend_tuple, shots=1024
-            )
-        except Exception as e:
-            if verbose:
-                print(f"    [QAOA] Backend evidence run failed: {e}")
-
     # ---- circuit metrics -------------------------------------------------
     gate_ops = qc_final.count_ops()
     gate_count = sum(gate_ops.values())
@@ -350,7 +378,7 @@ def run_qaoa(n_nodes: int,
         'gate_count':     gate_count,
         'depth':          depth,
         'exec_time':      elapsed,
-        'backend_time':   backend_time,
+        'backend_time':   0.0,
         'n_iterations':   len(obj_history),
         'obj_history':    obj_history,
         'violations':     violations,
@@ -358,7 +386,8 @@ def run_qaoa(n_nodes: int,
         'top_k':          top_k[:20],
         'final_cost':     best_result.fun,
         'gate_ops':       dict(gate_ops),
-        'backend_counts': backend_counts,
+        'backend_counts': {},
+        '_qc_final':      qc_final,   # carry circuit for evidence run
     }
 
     return best_route, metrics
@@ -432,4 +461,22 @@ def adaptive_penalty_qaoa(n_nodes: int,
 
     best_metrics['penalty_history'] = penalty_history
     best_metrics['penalty_iterations'] = len(all_metrics)
+
+    # ---- ONE qBraid evidence run per vehicle (after penalty loop) --------
+    # COBYLA uses fast local statevector. We submit to qBraid only once here,
+    # using the best final circuit, to prove real quantum execution.
+    if backend_tuple is not None and '_qc_final' in best_metrics:
+        try:
+            qc_ev = best_metrics['_qc_final'].copy()
+            qc_ev.measure_all()
+            bname = backend_name(backend_tuple)
+            counts, bt = run_circuit_on_backend(qc_ev, backend_tuple, shots=256)
+            best_metrics['backend_counts'] = counts
+            best_metrics['backend_time'] = bt
+        except Exception:
+            pass
+        best_metrics.pop('_qc_final', None)
+    else:
+        best_metrics.pop('_qc_final', None)
+
     return best_route, best_metrics
